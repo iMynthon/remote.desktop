@@ -2,7 +2,6 @@ package org.mynthon.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mynthon.dto.RemoteServerResponse;
@@ -22,8 +21,6 @@ public class ServerService {
        RemoteServer server = serverRepository.saveEntity(requestToEntity(request));
        return entityToResponse(server);
     }
-
-
 
     private RemoteServer requestToEntity(ServerRequest request){
         return RemoteServer.builder()

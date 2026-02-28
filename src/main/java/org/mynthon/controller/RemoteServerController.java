@@ -7,8 +7,8 @@ import jakarta.ws.rs.core.Response;
 import org.mynthon.dto.ServerRequest;
 import org.mynthon.service.ServerService;
 
-@Path("/hello")
-public class RemoteController {
+@Path("/remote/server")
+public class RemoteServerController {
 
     @Inject
     private ServerService serverService;

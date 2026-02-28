@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=Mynthon
+      - POSTGRES_PASSWORD=remote
+      - POSTGRES_DB=remote_desktop

@@ -31,4 +31,8 @@ public class RemoteServer extends PanacheEntityBase {
     private LocalDateTime created;
 
     private Boolean online;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "remote_client_id")
+    private RemoteClient remoteClient;
 }

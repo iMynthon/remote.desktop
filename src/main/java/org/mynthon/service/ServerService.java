@@ -9,6 +9,8 @@ import org.mynthon.dto.ServerRequest;
 import org.mynthon.model.RemoteServer;
 import org.mynthon.repository.RemoteServerRepository;
 
+import java.util.UUID;
+
 @Slf4j
 @ApplicationScoped
 @AllArgsConstructor
@@ -20,6 +22,10 @@ public class ServerService {
     public RemoteServerResponse create(ServerRequest request) {
        RemoteServer server = serverRepository.saveEntity(requestToEntity(request));
        return entityToResponse(server);
+    }
+
+    public RemoteServerResponse findById(UUID id){
+        return entityToResponse(serverRepository.findById(id));
     }
 
     private RemoteServer requestToEntity(ServerRequest request){

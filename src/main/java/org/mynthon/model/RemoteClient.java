@@ -29,4 +29,7 @@ public class RemoteClient extends PanacheEntityBase {
 
     @CreationTimestamp
     private LocalDateTime created;
+
+    @OneToOne(mappedBy = "remoteClient")
+    private RemoteServer remoteServer;
 }

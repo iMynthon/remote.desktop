@@ -11,5 +11,7 @@ CREATE TABLE remote_schema.remote_server(
     host VARCHAR(20) NOT NULL,
     name VARCHAR(100),
     created TIMESTAMP default current_timestamp,
-    online boolean
+    online boolean,
+    remote_client_id UUID,
+    CONSTRAINT fk_remote_client FOREIGN KEY (remote_client_id) REFERENCES remote_server(id)
 );

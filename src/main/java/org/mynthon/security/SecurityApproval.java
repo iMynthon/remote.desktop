@@ -10,7 +10,7 @@ public class SecurityApproval {
     @Inject
     private ClientService clientService;
 
-    public boolean checkAuthorizationDB(String name){
-        return clientService.existsClient(name);
+    public boolean checkAuthorizationDB(String name,String password){
+        return clientService.existsClient(name,password);
     }
 }

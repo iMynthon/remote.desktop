@@ -1,6 +1,7 @@
 CREATE TABLE remote_schema.remote_client(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name_client VARCHAR(100) NOT NULL,
+    password VARCHAR(100),
     name_pc VARCHAR(100),
     created TIMESTAMP default current_timestamp
 );

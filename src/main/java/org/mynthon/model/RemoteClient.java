@@ -24,6 +24,8 @@ public class RemoteClient extends PanacheEntityBase {
     @Column(name = "name_client")
     private String nameClient;
 
+    private String password;
+
     @Column(name = "name_pc")
     private String namePc;
 

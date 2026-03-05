@@ -38,14 +38,15 @@ public class ClientService {
         return entityToResponse(client);
     }
 
-    public Boolean existsClient(String name){
-        return repository.existsByName(name);
+    public Boolean existsClient(String name, String password){
+        return repository.existsByName(name,password);
     }
 
 
     private RemoteClient requestToEntity(ClientRequest request){
         return RemoteClient.builder()
                 .nameClient(request.name())
+                .password(request.password())
                 .namePc(request.namePc())
                 .build();
     }

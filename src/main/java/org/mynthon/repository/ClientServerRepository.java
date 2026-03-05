@@ -30,10 +30,11 @@ public class ClientServerRepository implements PanacheRepositoryBase<RemoteClien
     }
 
     @Transactional(SUPPORTS)
-    public Boolean existsByName(String nameClient) {
+    public Boolean existsByName(String nameClient, String password) {
         return getEntityManager()
-                .createQuery("SELECT COUNT(c) > 0 FROM remote_client c WHERE c.nameClient = :nameClient", Boolean.class)
+                .createQuery("SELECT COUNT(c) > 0 FROM remote_client c WHERE c.nameClient = :nameClient AND c.password = :password", Boolean.class)
                 .setParameter("nameClient", nameClient)
+                .setParameter("password",password)
                 .getSingleResult();
     }
 }

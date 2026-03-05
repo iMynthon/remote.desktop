@@ -17,6 +17,7 @@ dependencies {
     implementation("io.quarkus:quarkus-flyway")
     implementation("io.quarkus:quarkus-rest")
     implementation("io.quarkus:quarkus-websockets-next")
+    implementation("io.smallrye.common:smallrye-common-annotation")
     implementation("io.quarkus:quarkus-hibernate-orm-rest-data-panache")
     implementation("io.quarkus:quarkus-hibernate-orm")
     implementation("io.quarkus:quarkus-jdbc-postgresql")

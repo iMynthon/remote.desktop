@@ -2,12 +2,15 @@ package org.mynthon.repository;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.FlushModeType;
 import jakarta.transaction.Transactional;
 import org.mynthon.model.RemoteClient;
 
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
+import static jakarta.transaction.Transactional.TxType.REQUIRES_NEW;
 import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 @ApplicationScoped
@@ -15,7 +18,9 @@ public class ClientServerRepository implements PanacheRepositoryBase<RemoteClien
 
     @Transactional
     public RemoteClient saveEntity(RemoteClient client){
-        persist(client);
+        getEntityManager().persist(client);
+        getEntityManager().flush();
+        getEntityManager().refresh(client);
         return client;
     }
 
@@ -37,5 +42,14 @@ public class ClientServerRepository implements PanacheRepositoryBase<RemoteClien
                 .setParameter("password",password)
                 .getSingleResult();
     }
-}
 
+    @Transactional
+    public Boolean existsByConnectionId(Integer connectionId) {
+        return getEntityManager()
+                .createQuery("SELECT COUNT(c) > 0 FROM remote_client c WHERE c.connectionId = :connectionId", Boolean.class)
+                .setParameter("connectionId", connectionId)
+                .setFlushMode(FlushModeType.COMMIT)
+                .getSingleResult();
+    }
+
+}

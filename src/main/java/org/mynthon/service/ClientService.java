@@ -14,11 +14,14 @@ import org.mynthon.repository.ClientServerRepository;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @ApplicationScoped
 @AllArgsConstructor
 public class ClientService {
+
+    private final ReentrantLock lock = new ReentrantLock();
 
     @Inject
     private ClientServerRepository repository;
@@ -42,6 +45,10 @@ public class ClientService {
         return repository.existsByName(name,password);
     }
 
+    public Boolean existsConnectionId(Integer connectionId){
+        return repository.existsByConnectionId(connectionId);
+    }
+
 
     private RemoteClient requestToEntity(ClientRequest request){
         return RemoteClient.builder()
@@ -56,6 +63,7 @@ public class ClientService {
                 .name(remoteClient.getNameClient())
                 .namePc(remoteClient.getNamePc())
                 .serverResponse(checkNullableServer(remoteClient))
+                .connectionId(remoteClient.getConnectionId())
                 .build();
     }
 

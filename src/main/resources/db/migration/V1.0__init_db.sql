@@ -5,7 +5,6 @@ CREATE TABLE remote_schema.remote_client(
     name_client VARCHAR(100) UNIQUE NOT NULL,
     connection_id BIGINT DEFAULT nextval('remote_schema.remote_client_connection_id_seq') UNIQUE,
     password VARCHAR(100),
-    name_pc VARCHAR(100),
     created TIMESTAMP default current_timestamp
 );
 

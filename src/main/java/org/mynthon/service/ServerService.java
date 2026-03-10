@@ -1,44 +1,41 @@
 package org.mynthon.service;
 
+import io.quarkus.websockets.next.WebSocketConnection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.mynthon.dto.RemoteServerResponse;
-import org.mynthon.dto.ServerRequest;
-import org.mynthon.model.RemoteServer;
-import org.mynthon.repository.RemoteServerRepository;
 
-import java.util.UUID;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @ApplicationScoped
 @AllArgsConstructor
 public class ServerService {
 
-    @Inject
-    private RemoteServerRepository serverRepository;
+    private final Map<Integer, WebSocketConnection> connectionsMap = new ConcurrentHashMap<>();
 
-    public RemoteServerResponse create(ServerRequest request) {
-       RemoteServer server = serverRepository.saveEntity(requestToEntity(request));
-       return entityToResponse(server);
+    public void saveToMapAndDB(Integer connectionId, WebSocketConnection connection) {
+        connectionsMap.put(connectionId,connection);
     }
 
-    public RemoteServerResponse findById(UUID id){
-        return entityToResponse(serverRepository.findById(id));
+    public byte[] desktopRemoteScreen(){
+        try {
+            Robot robot = new Robot();
+            Rectangle rectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+            BufferedImage image = robot.createScreenCapture(rectangle);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image,"jpeg",baos);
+            return baos.toByteArray();
+        } catch (AWTException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private RemoteServer requestToEntity(ServerRequest request){
-        return RemoteServer.builder()
-                .name(request.name())
-                .host("192.168.0.82")
-                .port(request.port())
-                .online(true)
-                .build();
-    }
-
-    private RemoteServerResponse entityToResponse(RemoteServer server){
-        return new RemoteServerResponse(server.getHost(),
-                server.getPort(),server.getName(),server.getOnline());
-    }
 }

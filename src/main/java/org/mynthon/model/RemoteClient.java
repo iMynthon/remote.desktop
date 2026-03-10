@@ -4,7 +4,6 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
@@ -30,12 +29,6 @@ public class RemoteClient extends PanacheEntityBase {
 
     private String password;
 
-    @Column(name = "name_pc")
-    private String namePc;
-
     @CreationTimestamp
     private LocalDateTime created;
-
-    @OneToOne(mappedBy = "remoteClient")
-    private RemoteServer remoteServer;
 }

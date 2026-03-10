@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Remote Desktop Control</title>
+    <style>
+        /* Общие стили для страницы */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* Скрытый класс — элементы с ним не видны */
+        .hidden {
+            display: none;
+        }
+
+        /* Стили для форм */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label loginInput{
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        label passwordInput{
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+
+        /* Блок с информацией о пользователе */
+        .user-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .user-info p {
+            margin: 5px 0;
+        }
+
+        /* Изображение экрана */
+        #screen {
+            max-width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        /* Статус подключения */
+        #connectionStatus {
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .connected { color: green; }
+        .disconnected { color: red; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- БЛОК РЕГИСТРАЦИИ (изначально виден) -->
+    <div id="registerSection">
+        <h2>Регистрация</h2>
+        <div class="form-group">
+            <label for="loginInput">Логин:</label>
+            <input type="text" id="loginInput" placeholder="Введите логин" value="">
+            <label for="passwordInput">Пароль:</label>
+            <input type="text" id="passwordInput" placeholder="Введите пароль" value="">
+        </div>
+        <button onclick="register()">Зарегистрироваться</button>
+        <div id="registerError" class="error"></div>
+    </div>
+
+    <!-- БЛОК УПРАВЛЕНИЯ (изначально скрыт) -->
+    <div id="controlSection" class="hidden">
+        <h2>Управление удалённым рабочим столом</h2>
+
+        <!-- Информация о пользователе -->
+        <div class="user-info">
+            <p><strong>Логин:</strong> <span id="displayLogin"></span></p>
+            <p><strong>Connection ID:</strong> <span id="displayConnectionId"></span></p>
+            <p>
+                <strong>Статус:</strong>
+                <span id="connectionStatus" class="disconnected">Отключено</span>
+            </p>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div>
+            <button onclick="connectWebSocket()" id="connectBtn">Подключиться</button>
+            <button onclick="disconnectWebSocket()" id="disconnectBtn" disabled>Отключиться</button>
+            <button onclick="requestScreenshot()" id="screenshotBtn" disabled>Получить скриншот</button>
+        </div>
+
+        <!-- Область для отображения скриншота -->
+        <h3>Скриншот удалённого экрана:</h3>
+        <img id="screen" alt="Здесь будет скриншот">
+    </div>
+</div>
+
+<script>
+    // -------------------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --------------------
+    // Объект WebSocket (будет создан после подключения)
+    let socket = null;
+
+    // URL для сохранения последнего скриншота (чтобы не утекала память)
+    let currentScreenUrl = null;
+
+    // Данные пользователя, полученные при регистрации
+    let currentUser = {
+        login: '',
+        connectionId: null
+    };
+
+    // Получаем ссылки на DOM-элементы (для удобства)
+    const registerSection = document.getElementById('registerSection');
+    const controlSection = document.getElementById('controlSection');
+    const loginInput = document.getElementById('loginInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const registerError = document.getElementById('registerError');
+    const displayLogin = document.getElementById('displayLogin');
+    const displayConnectionId = document.getElementById('displayConnectionId');
+    const connectionStatusSpan = document.getElementById('connectionStatus');
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const screenshotBtn = document.getElementById('screenshotBtn');
+    const screenImg = document.getElementById('screen');
+
+    // -------------------- ФУНКЦИИ РЕГИСТРАЦИИ --------------------
+    // Функция вызывается при нажатии кнопки "Зарегистрироваться"
+    async function register() {
+        // Получаем введённый логин и убираем лишние пробелы
+        const login = loginInput.value.trim();
+        const password = passwordInput.value;
+
+        // Валидация: если логин пустой, показываем ошибку
+        if (!login || !password) {
+            registerError.textContent = 'Логин или пароль не может быть пустым';
+            return;
+        }
+
+        // Очищаем предыдущую ошибку
+        registerError.textContent = '';
+
+        try {
+            // Отправляем POST-запрос на сервер для регистрации
+            // Предполагаем, что сервер принимает JSON вида { "login": "...", "password": "..." }
+            // и возвращает { "token" }
+            const response = await fetch('/api/v1/register/client', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ login, password })
+            });
+
+            // Если ответ не успешный (статус не 2xx), бросаем ошибку
+            if (!response.ok) {
+                throw new Error(`Ошибка регистрации: ${response.status}`);
+            }
+
+            // Парсим JSON-ответ
+            const data = await response.json();
+            const token = data.token;
+
+            function parseJwt(token){
+              try{
+                const base64Url = token.split('.')[1]
+                const base64 = base64Url.replace(/-/g,'+').replace(/_/g,'/')
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);}).join(''));
+                              return JSON.parse(jsonPayload);
+                }catch(e){
+                console.error("Invalid token",e)
+                return null;
+              }
+            }
+            const payload = parseJwt(token);
+            console.log(payload.sub);
+            console.log(payload.connectionId);
+
+            localStorage.setItem("jwt",token);
+
+            // Сохраняем данные пользователя
+            currentUser.login = payload.sub;           // логин (может быть тот же, что отправили)
+            currentUser.connectionId = payload.connectionId; // например, 10001
+
+            // Обновляем текст в блоке информации
+            displayLogin.textContent = currentUser.login;
+            displayConnectionId.textContent = currentUser.connectionId;
+
+            // Переключаем видимость: скрываем регистрацию, показываем управление
+            registerSection.classList.add('hidden');
+            controlSection.classList.remove('hidden');
+
+        } catch (error) {
+            // Если произошла ошибка (сеть, сервер вернул ошибку), показываем её
+            registerError.textContent = `Ошибка: ${error.message}`;
+        }
+    }
+
+    // -------------------- ФУНКЦИИ ДЛЯ WEBSOCKET --------------------
+    // Подключение к WebSocket
+    function connectWebSocket() {
+        // Если уже есть открытое соединение, ничего не делаем
+        if (socket && socket.readyState === WebSocket.OPEN) return;
+
+        // Формируем URL WebSocket, используя сохранённый connectionId
+        const wsUrl = `ws://localhost:5679/remote-control/${currentUser.connectionId}`;
+        socket = new WebSocket(wsUrl);
+
+        // Указываем, что бинарные данные будем получать как ArrayBuffer
+        socket.binaryType = 'arraybuffer';
+
+        // Событие открытия соединения
+        socket.onopen = function() {
+            // Меняем статус и кнопки
+            connectionStatusSpan.textContent = 'Подключено';
+            connectionStatusSpan.className = 'connected';
+            connectBtn.disabled = true;
+            disconnectBtn.disabled = false;
+            screenshotBtn.disabled = false;
+
+            // Можно отправить приветственное сообщение
+            log('Система', 'WebSocket подключён');
+        };
+
+        // Событие получения сообщения
+        socket.onmessage = function(event) {
+            // Проверяем тип данных: строка или бинарные
+            if (typeof event.data === 'string') {
+                // Текстовое сообщение — выводим в консоль (можно игнорировать)
+                console.log('Текстовое сообщение:', event.data);
+            } else {
+                // Бинарные данные — предполагаем, что это JPEG-скриншот
+                // Освобождаем предыдущий URL (если был), чтобы не занимать память
+                if (currentScreenUrl) {
+                    URL.revokeObjectURL(currentScreenUrl);
+                }
+                // Создаём Blob из полученных бинарных данных
+                const blob = new Blob([event.data], { type: 'image/jpeg' });
+                // Генерируем временный URL для этого Blob
+                currentScreenUrl = URL.createObjectURL(blob);
+                // Устанавливаем этот URL как источник изображения
+                screenImg.src = currentScreenUrl;
+                // Логируем получение
+                log('Система', 'Скриншот получен');
+            }
+        };
+
+        // Событие закрытия соединения
+        socket.onclose = function(event) {
+            // Возвращаем кнопки в исходное состояние
+            connectionStatusSpan.textContent = 'Отключено';
+            connectionStatusSpan.className = 'disconnected';
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+            screenshotBtn.disabled = true;
+
+            let reason = 'Соединение закрыто';
+            if (event.code === 4000) {
+                reason = 'ID уже используется';
+            } else if (event.code === 401) {
+                reason = 'Неавторизован (ID не найден)';
+            } else if (event.reason) {
+                reason = event.reason;
+            }
+            log('Система', reason);
+        };
+
+        // Событие ошибки
+        socket.onerror = function(error) {
+            log('Ошибка', 'Произошла ошибка WebSocket');
+            console.error(error);
+        };
+    }
+
+    // Отключение WebSocket
+    function disconnectWebSocket() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.close(1000, 'Пользователь отключился');
+        }
+    }
+
+    // Запрос скриншота
+    function requestScreenshot() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            // Отправляем команду "get_screenshot" (сервер должен её понимать)
+            socket.send('get_screenshot');
+            log('Система', 'Запрос скриншота отправлен');
+        }
+    }
+
+    // Вспомогательная функция для логирования (можно выводить в консоль)
+    function log(sender, message) {
+        console.log(`[${new Date().toLocaleTimeString()}] ${sender}: ${message}`);
+    }
+
+    // -------------------- ОБРАБОТЧИКИ СОБЫТИЙ --------------------
+    // При выходе со страницы закрываем WebSocket (если он открыт)
+    window.addEventListener('beforeunload', function() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.close(1000, 'Страница закрыта');
+        }
+    });
+
+    // Также при нажатии Enter в поле логина можно вызывать регистрацию
+    loginInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            register();
+        }
+    });
+</script>
+</body>
+</html>

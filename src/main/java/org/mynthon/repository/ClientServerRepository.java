@@ -7,10 +7,8 @@ import jakarta.transaction.Transactional;
 import org.mynthon.model.RemoteClient;
 
 import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
 
-import static jakarta.transaction.Transactional.TxType.REQUIRES_NEW;
 import static jakarta.transaction.Transactional.TxType.SUPPORTS;
 
 @ApplicationScoped

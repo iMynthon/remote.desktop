@@ -4,77 +4,62 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.mynthon.dto.ClientRequest;
+import org.mynthon.dto.RegRequest;
 import org.mynthon.dto.RemoteClientResponse;
-import org.mynthon.dto.RemoteServerResponse;
+import org.mynthon.dto.TokenResponse;
 import org.mynthon.exception.EntityNotFoundException;
 import org.mynthon.model.RemoteClient;
 import org.mynthon.repository.ClientServerRepository;
-
-import java.util.Objects;
-import java.util.Optional;
+import org.mynthon.security.SecurityService;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @ApplicationScoped
 @AllArgsConstructor
 public class ClientService {
 
-    private final ReentrantLock lock = new ReentrantLock();
-
     @Inject
     private ClientServerRepository repository;
 
-    public RemoteClientResponse save(ClientRequest request){
-        RemoteClient client = repository.saveEntity(requestToEntity(request));
-        return entityToResponse(client);
+    @Inject
+    private SecurityService securityService;
+
+    public TokenResponse save(RegRequest regRequest) {
+        RemoteClient remoteClient = repository.saveEntity(requestToEntity(regRequest));
+        return securityService.saveToken(remoteClient.getNameClient(),remoteClient.getConnectionId());
     }
 
-    public RemoteClientResponse name(String name){
+    public RemoteClientResponse name(String name) {
         RemoteClient client = repository.findByName(name).orElseThrow(() -> new EntityNotFoundException("Don't find client with name"));
         return entityToResponse(client);
     }
 
-    public RemoteClientResponse findById(UUID id){
+    public RemoteClientResponse findById(UUID id) {
         RemoteClient client = repository.findByUUIDID(id).orElseThrow(() -> new EntityNotFoundException("Don't find client with id"));
         return entityToResponse(client);
     }
 
-    public Boolean existsClient(String name, String password){
-        return repository.existsByName(name,password);
+    public Boolean existsClient(String name, String password) {
+        return repository.existsByName(name, password);
     }
 
-    public Boolean existsConnectionId(Integer connectionId){
+    public Boolean existsConnectionId(Integer connectionId) {
         return repository.existsByConnectionId(connectionId);
     }
 
 
-    private RemoteClient requestToEntity(ClientRequest request){
+    private RemoteClient requestToEntity(RegRequest regRequest) {
         return RemoteClient.builder()
-                .nameClient(request.name())
-                .password(request.password())
-                .namePc(request.namePc())
+                .nameClient(regRequest.login())
+                .password(regRequest.password())
                 .build();
     }
 
-    private RemoteClientResponse entityToResponse(RemoteClient remoteClient){
+    private RemoteClientResponse entityToResponse(RemoteClient remoteClient) {
         return RemoteClientResponse.builder()
                 .name(remoteClient.getNameClient())
-                .namePc(remoteClient.getNamePc())
-                .serverResponse(checkNullableServer(remoteClient))
                 .connectionId(remoteClient.getConnectionId())
                 .build();
     }
 
-    private RemoteServerResponse checkNullableServer(RemoteClient remoteClient){
-        if(!Objects.isNull(remoteClient.getRemoteServer())) {
-            return new RemoteServerResponse(
-                    remoteClient.getRemoteServer().getHost(),
-                    remoteClient.getRemoteServer().getPort(),
-                    remoteClient.getRemoteServer().getName(),
-                    remoteClient.getRemoteServer().getOnline());
-        }
-        return new RemoteServerResponse("0.0.0.0",0,"not name", false);
-    }
 }

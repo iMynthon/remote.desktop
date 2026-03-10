@@ -56,7 +56,7 @@ public class SecurityFilter {
 
         log.info("Request: {} - {}", method, path);
 
-        if (path.contains("/public/")) {
+        if (path.contains("/api/v1/register/client")) {
             return null;
         }
 

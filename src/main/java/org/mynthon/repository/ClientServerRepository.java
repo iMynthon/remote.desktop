@@ -5,7 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.FlushModeType;
 import jakarta.transaction.Transactional;
 import org.mynthon.model.RemoteClient;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,6 +29,16 @@ public class ClientServerRepository implements PanacheRepositoryBase<RemoteClien
     @Transactional(SUPPORTS)
     public Optional<RemoteClient> findByUUIDID(UUID id){
         return findByIdOptional(id);
+    }
+
+    @Transactional(SUPPORTS)
+    public Optional<RemoteClient> findByConnectionId(Integer connectionId){
+        return getEntityManager()
+                .createQuery("SELECT c FROM remote_client c WHERE c.connectionId = :connectionId",RemoteClient.class)
+                .setParameter("connectionId",connectionId)
+                .getResultList()
+                .stream()
+                .findFirst();
     }
 
     @Transactional(SUPPORTS)

@@ -11,6 +11,9 @@ import org.mynthon.exception.EntityNotFoundException;
 import org.mynthon.model.RemoteClient;
 import org.mynthon.repository.ClientServerRepository;
 import org.mynthon.security.SecurityService;
+
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 @Slf4j
@@ -25,25 +28,35 @@ public class ClientService {
     private SecurityService securityService;
 
     public TokenResponse save(RegRequest regRequest) {
+        log.info("Callable method save: param regRequest: {} - {}",regRequest.login(),regRequest.password());
         RemoteClient remoteClient = repository.saveEntity(requestToEntity(regRequest));
         return securityService.saveToken(remoteClient.getNameClient(),remoteClient.getConnectionId());
     }
 
     public RemoteClientResponse name(String name) {
+        log.info("Callable method name: param name: {}",name);
         RemoteClient client = repository.findByName(name).orElseThrow(() -> new EntityNotFoundException("Don't find client with name"));
         return entityToResponse(client);
     }
 
     public RemoteClientResponse findById(UUID id) {
+        log.info("Callable method findById: param id: {}",id);
         RemoteClient client = repository.findByUUIDID(id).orElseThrow(() -> new EntityNotFoundException("Don't find client with id"));
         return entityToResponse(client);
     }
 
+    public RemoteClient getRCByConnectionId(Integer connectionId){
+        log.info("Callable method getRCByConnectionId: param: {}",connectionId);
+        return repository.findByConnectionId(connectionId).orElseThrow(() -> new EntityNotFoundException("Don't find client with connectionId"));
+    }
+
     public Boolean existsClient(String name, String password) {
+        log.info("Callable method existsClient: param name - password: {} - {}",name,password);
         return repository.existsByName(name, password);
     }
 
     public Boolean existsConnectionId(Integer connectionId) {
+        log.info("Callable method existsConnectionId: param connectionId: {}",connectionId);
         return repository.existsByConnectionId(connectionId);
     }
 

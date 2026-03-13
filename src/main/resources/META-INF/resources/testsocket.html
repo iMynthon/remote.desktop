@@ -258,7 +258,7 @@
         if (socket && socket.readyState === WebSocket.OPEN) return;
 
         // Формируем URL WebSocket, используя сохранённый connectionId
-        const wsUrl = `ws://localhost:5679/remote-control/${currentUser.connectionId}`;
+        const wsUrl = `ws://192.168.0.82:5679/remote-control/${currentUser.connectionId}`;
         socket = new WebSocket(wsUrl);
 
         // Указываем, что бинарные данные будем получать как ArrayBuffer

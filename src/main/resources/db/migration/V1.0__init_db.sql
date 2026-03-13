@@ -8,13 +8,11 @@ CREATE TABLE remote_schema.remote_client(
     created TIMESTAMP default current_timestamp
 );
 
-CREATE TABLE remote_schema.remote_server(
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    port INT UNIQUE NOT NULL,
-    host VARCHAR(20) NOT NULL,
-    name VARCHAR(100),
-    created TIMESTAMP default current_timestamp,
-    online boolean,
-    remote_client_id UUID,
-    CONSTRAINT fk_remote_client FOREIGN KEY (remote_client_id) REFERENCES remote_client(id)
-);
+CREATE TABLE remote_schema.server_log_connection(
+     id BIGSERIAL PRIMARY KEY,
+     client_id UUID NOT NULL,
+     connection_id BIGINT NOT NULL,
+     connection_create_time TIMESTAMP default current_timestamp
+)
+
+

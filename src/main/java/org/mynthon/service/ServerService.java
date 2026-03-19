@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.mynthon.dto.ServerLogConnectionResponse;
 import org.mynthon.model.RemoteClient;
 import org.mynthon.model.ServerLogConnection;
 import org.mynthon.repository.ServerRepository;
@@ -15,9 +16,13 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @ApplicationScoped
@@ -48,6 +53,13 @@ public class ServerService {
         });
     }
 
+    public ServerLogConnectionResponse getLogConnectionClient(UUID clientId){
+        log.info("Calling method getLogConnectionClient: param - clientId: {}",clientId);
+        List<ServerLogConnection> logConnectionList = serverRepository.findLogConnectionByClientId(clientId);
+        return entityToResponse(clientId,logConnectionList);
+    }
+
+
     public byte[] desktopRemoteScreen() {
         try {
             log.info("Callable method desktopRemoteScreen: no param");
@@ -61,6 +73,13 @@ public class ServerService {
         } catch (AWTException | IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private ServerLogConnectionResponse entityToResponse(UUID clientId,List<ServerLogConnection> logConnectionList){
+       List<ServerLogConnectionResponse.LogConnection> logConnections = logConnectionList.stream()
+               .map(lc -> new ServerLogConnectionResponse.LogConnection(lc.getConnectionId(),lc.getConnectionCreateTime().toString()))
+               .toList();
+       return new ServerLogConnectionResponse(clientId,logConnections);
     }
 
 }

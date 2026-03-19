@@ -2,6 +2,7 @@ package org.mynthon.controller;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import org.mynthon.dto.RemoteClientResponse;
 import org.mynthon.service.ClientService;
 
@@ -14,14 +15,16 @@ public class RemoteClientController {
     private ClientService service;
 
     @GET
-    @Path("/{name}")
-    public RemoteClientResponse getClientName(@PathParam("name") String name){
-        return service.name(name);
+    @Path("/findId/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public RemoteClientResponse getClientId(@PathParam("id") String id){
+        return service.findById(UUID.fromString(id));
     }
 
     @GET
-    @Path("/{id}")
-    public RemoteClientResponse getClientId(@PathParam("id")UUID id){
-        return service.findById(id);
+    @Path("/findName/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public RemoteClientResponse getClientName(@PathParam("name") String name){
+        return service.name(name);
     }
 }
